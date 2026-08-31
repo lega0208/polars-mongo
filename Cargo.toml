@@ -1,0 +1,27 @@
+[package]
+name = "polars-mongo"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Polars expression plugin for MongoDB-flavoured data"
+license = "MIT"
+publish = false
+
+[lib]
+name = "polars_mongo"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# `extension-module` is intentionally NOT enabled here: it would break `cargo test`
+# and `cargo run`. maturin turns it on via `features` in pyproject.toml.
+pyo3 = { version = "0.29", features = ["abi3-py310"] }
+pyo3-polars = { version = "0.28", features = ["derive"] }
+polars = { version = "0.55", default-features = false, features = [
+    "dtype-datetime",
+] }
+serde = { version = "1", features = ["derive"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = true
