@@ -6,7 +6,7 @@ build-backend = "maturin"
 name = "polars-mongo"
 description = "Polars expression plugin for MongoDB-flavoured data"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = ["polars>=1.44"]
 dynamic = ["version"]
