@@ -52,7 +52,7 @@ class MongoExprNamespace:
     """`pl.col("_id").mongo.<fn>()` access to the plugin expressions."""
 
     def __init__(self, expr: pl.Expr) -> None:
-        self._expr = expr
+        self._expr: pl.Expr = expr
 
     def is_object_id(self) -> pl.Expr:
         return is_object_id(self._expr)
