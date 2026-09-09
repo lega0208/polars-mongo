@@ -1,7 +1,10 @@
 use polars_core::{
-    error::{PolarsResult, polars_bail}, prelude::{
-        BooleanChunked, DataType, Field, Int64Chunked, NewChunkedArray, ReshapeDimension, StringChunked, TimeUnit, UInt8Chunked,
-    }, series::{IntoSeries, Series},
+    error::{PolarsResult, polars_bail},
+    prelude::{
+        BooleanChunked, DataType, Field, Int64Chunked, NewChunkedArray, ReshapeDimension,
+        StringChunked, TimeUnit, UInt8Chunked,
+    },
+    series::{IntoSeries, Series},
 };
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
