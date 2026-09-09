@@ -1,13 +1,12 @@
-name: Release
+name: Publish
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  release:
+    types: [published]
 
 concurrency:
   group: release-publish
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
