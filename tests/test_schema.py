@@ -40,8 +40,8 @@ class _Excluded(pa.ExtensionType):
     def __arrow_ext_serialize__(self) -> bytes:
         return b""
 
-    @override
     @classmethod
+    @override
     def __arrow_ext_deserialize__(cls, storage_type: pa.DataType, serialized: bytes) -> _Excluded:
         return cls("polars_mongo.regex")
 

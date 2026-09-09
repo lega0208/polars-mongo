@@ -43,5 +43,5 @@ fmt: ## Format Rust and Python
 .PHONY: clean
 clean: ## Remove build artifacts
 	cargo clean
-	rm -rf .venv .pytest_cache .ruff_cache
+	rm -rf .venv .pytest_cache .ruff_cache .ty_cache
 	find python -name '*.so' -delete
