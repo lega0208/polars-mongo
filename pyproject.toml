@@ -9,8 +9,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [
-    "polars @ git+https://github.com/pola-rs/polars.git@ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c#subdirectory=py-polars",
-    "polars-runtime-32 @ git+https://github.com/pola-rs/polars.git@ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c#subdirectory=py-polars/runtime/polars-runtime-32",
+    "polars==2.0.0rc1",
+    "polars-runtime-32==2.0.0rc1",
     "pyarrow>=17",
 ]
 dynamic = ["version"]
