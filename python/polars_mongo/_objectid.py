@@ -135,7 +135,7 @@ def _register() -> None:
     for arrow_type in _PYARROW_TYPES.values():
         # Already registered in this interpreter: registration is idempotent.
         with contextlib.suppress(pa.ArrowKeyError):
-            pa.register_extension_type(arrow_type())  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]  # pyright: ignore[reportArgumentType]
+            pa.register_extension_type(arrow_type())  # ty: ignore[invalid-argument-type]
 
 
 _register()

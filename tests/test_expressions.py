@@ -60,18 +60,20 @@ def test_object_id_timestamp_rejects_utf8(df: pl.DataFrame) -> None:
 
 def test_invalid_time_unit(object_id_df: pl.DataFrame) -> None:
     with pytest.raises(pl.exceptions.ComputeError):
-        object_id_df.select(pm.object_id_timestamp("_id", time_unit="weeks"))  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
+        object_id_df.select(
+            pm.object_id_timestamp("_id", time_unit="weeks")  # ty: ignore[invalid-argument-type]
+        )
 
 
-# `register_expr_namespace` attaches `.mongo` at runtime, which mypy cannot see.
+# `register_expr_namespace` attaches `.mongo` at runtime, which ty cannot see.
 def test_expr_namespace(df: pl.DataFrame) -> None:
-    out = df.select(pl.col("_id").mongo.is_object_id())  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
+    out = df.select(pl.col("_id").mongo.is_object_id())  # ty: ignore[unresolved-attribute]
     assert out.to_series().to_list() == [True, False, None]
 
 
 def test_expr_namespace_timestamp(object_id_df: pl.DataFrame) -> None:
     out = object_id_df.select(
-        pl.col("_id").mongo.object_id_timestamp()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
+        pl.col("_id").mongo.object_id_timestamp()  # ty: ignore[unresolved-attribute]
     )
     assert out.item(0, 0) == OID_CREATED_AT
 
@@ -80,7 +82,7 @@ def test_lazy_streaming_timestamp(object_id_df: pl.DataFrame) -> None:
     out = (
         object_id_df.lazy()
         .select(
-            pl.col("_id").mongo.object_id_timestamp()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]
+            pl.col("_id").mongo.object_id_timestamp()  # ty: ignore[unresolved-attribute]
         )
         .collect()
     )

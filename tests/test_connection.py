@@ -42,7 +42,8 @@ def test_context_manager_closes_on_exit() -> None:
 
 
 def test_context_manager_propagates_exceptions() -> None:
-    with pytest.raises(ValueError), pm.MongoConnection(URI) as conn:
+    conn = pm.MongoConnection(URI)
+    with pytest.raises(ValueError), conn:
         raise ValueError("boom")
     assert conn.closed is True
 

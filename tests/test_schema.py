@@ -6,6 +6,8 @@ rejection happens here - before a connection is touched.
 
 from __future__ import annotations
 
+from typing import override
+
 import pyarrow as pa
 import pytest
 
@@ -34,9 +36,11 @@ class _Excluded(pa.ExtensionType):
         self._name = name
         super().__init__(pa.string(), name)
 
+    @override
     def __arrow_ext_serialize__(self) -> bytes:
         return b""
 
+    @override
     @classmethod
     def __arrow_ext_deserialize__(cls, storage_type: pa.DataType, serialized: bytes) -> _Excluded:
         return cls("polars_mongo.regex")

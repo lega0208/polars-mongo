@@ -30,7 +30,7 @@ dev = [
     "maturin>=1.15",
     "pytest>=8.3",
     "ruff>=0.14",
-    "mypy>=1.14",
+    "ty>=0.0.80",
     # Independent BSON oracle for the test harness. Never a runtime dependency.
     "pymongo>=4.10",
     "pyarrow-stubs>=20.0.0.20260819",
@@ -50,6 +50,8 @@ src = ["python", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "TC"]
 
-[tool.mypy]
-files = ["python", "tests"]
-strict = true
+[tool.ty.src]
+include = ["python", "tests"]
+
+[tool.ty.rules]
+all = "error"

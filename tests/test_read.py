@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 import polars as pl
 import polars.testing
@@ -212,7 +212,7 @@ def test_read_mongo_forwards_arguments_and_collects_once(
     schema = ex.BASE_SCHEMA
     projection_schema = ex.PROJECTED_SCHEMA
     result = read_mongo(
-        connection,  # type: ignore[arg-type]
+        connection,  # ty: ignore[invalid-argument-type]
         "db",
         "coll",
         schema=schema,
@@ -251,7 +251,7 @@ def test_read_mongo_forwards_the_default_batch_size(monkeypatch: pytest.MonkeyPa
         return _Lazy()
 
     monkeypatch.setattr(_read, "scan_mongo", fake_scan)
-    read_mongo(object(), "db", "coll", schema=ex.BASE_SCHEMA)  # type: ignore[arg-type]
+    read_mongo(object(), "db", "coll", schema=ex.BASE_SCHEMA)  # ty: ignore[invalid-argument-type]
 
     assert calls[0]["batch_size"] == DEFAULT_BATCH_SIZE
 
@@ -472,12 +472,12 @@ def test_server_limit_before_local_filter(
         limit=limit,
         batch_size=batch_size,
     )
+    cap = 3
     if case == "beyond-window":
         local = pl.col("k") >= 15
         expected_rows = [ex.wide_row(doc["k"]) for doc in window if doc["k"] >= 15]
         result = lazy.filter(local).collect()
     else:
-        cap = 3
         local = pl.col("k") % 2 == 1
         expected_rows = [ex.wide_row(doc["k"]) for doc in window if doc["k"] % 2 == 1][:cap]
         result = lazy.filter(local).head(cap).collect()
@@ -766,6 +766,7 @@ def test_connection_context_manager_with_late_collect(
     """
     _seed(raw, clean_db, ex.BASE_ROWS)
 
+    late: pl.LazyFrame | None = None
     with pm.MongoConnection(mongo_uri) as conn:
         inside = scan_mongo(conn, clean_db, COLLECTION, schema=ex.BASE_SCHEMA)
         collected = inside.collect()
@@ -775,6 +776,7 @@ def test_connection_context_manager_with_late_collect(
         late = scan_mongo(conn, clean_db, COLLECTION, schema=ex.BASE_SCHEMA)
 
     assert conn.closed
+    assert late is not None
 
     with pytest.raises(BaseException) as excinfo:  # noqa: B017, PT011 - the class IS the assertion
         late.collect()
@@ -829,6 +831,7 @@ class _DetachProbe(threading.Thread):
         self.iterations_inside = 0
         self.polls = 0
 
+    @override
     def run(self) -> None:
         inside_previous = False
         while not self.stop.is_set():

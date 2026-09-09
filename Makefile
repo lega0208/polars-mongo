@@ -32,7 +32,7 @@ lint: ## Lint and type-check Rust and Python
 	cargo clippy --all-targets -- -D warnings
 	$(UV) run ruff check .
 	$(UV) run ruff format --check .
-	$(UV) run mypy
+	$(UV) run ty check
 
 .PHONY: fmt
 fmt: ## Format Rust and Python
@@ -43,5 +43,5 @@ fmt: ## Format Rust and Python
 .PHONY: clean
 clean: ## Remove build artifacts
 	cargo clean
-	rm -rf .venv .pytest_cache .mypy_cache .ruff_cache
+	rm -rf .venv .pytest_cache .ruff_cache
 	find python -name '*.so' -delete

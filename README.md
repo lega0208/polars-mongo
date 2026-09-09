@@ -8,7 +8,7 @@ in Rust and packaged with [maturin](https://www.maturin.rs).
 ```bash
 make dev     # uv sync + maturin develop --uv
 make test    # cargo test + pytest
-make lint    # fmt, clippy, ruff, mypy
+make lint    # fmt, clippy, ruff, ty
 ```
 
 `object_id_timestamp` operates on binary ObjectId storage, not hex strings.
