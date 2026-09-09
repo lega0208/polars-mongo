@@ -1,7 +1,7 @@
 [package]
 name = "polars-mongo"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 rust-version = "1.85"
 description = "Polars expression plugin for MongoDB-flavoured data"
 license = "MIT"
@@ -15,10 +15,31 @@ crate-type = ["cdylib", "rlib"]
 # `extension-module` is intentionally NOT enabled here: it would break `cargo test`
 # and `cargo run`. maturin turns it on via `features` in pyproject.toml.
 pyo3 = { version = "0.29", features = ["abi3-py310"] }
-pyo3-polars = { version = "0.28", features = ["derive"] }
-polars = { version = "0.55", default-features = false, features = [
+pyo3-polars = { git = "https://github.com/pola-rs/polars.git", rev = "ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c", features = ["derive"] }
+# Feature closure is stated in full; `dtype-u8` is required for Arrow UInt8 import
+# (F5) and is not left to transitive defaults. `lazy` is deliberately not enabled.
+polars-core = { git = "https://github.com/pola-rs/polars.git", rev = "ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c", default-features = false, features = [
     "dtype-datetime",
+    "dtype-array",
+    "dtype-struct",
+    "dtype-extension",
+    "dtype-u8"
 ] }
+# `polars` does not forward its `dtype-*` features to the optional `polars-expr`
+# crate that `pyo3-polars` enables, so cargo unifies a `polars-plan` that knows
+# about Array/Struct dtypes with a `polars-expr` that does not, and `polars-expr`
+# fails its exhaustive dispatch matches. Pinning the same feature closure here
+# repairs the unification without enabling `lazy`.
+polars-expr = { git = "https://github.com/pola-rs/polars.git", rev = "ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c", default-features = false, features = [
+    "dtype-datetime",
+    "dtype-array",
+    "dtype-struct",
+    "dtype-extension",
+    "dtype-u8",
+] }
+polars-arrow = { git = "https://github.com/pola-rs/polars.git", rev = "ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c", default-features = false }
+polars-utils = { git = "https://github.com/pola-rs/polars.git", rev = "ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c", default-features = false }
+mongodb = { version = "3.9", features = ["sync"] }
 serde = { version = "1", features = ["derive"] }
 
 [profile.release]

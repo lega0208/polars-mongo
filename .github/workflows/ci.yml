@@ -9,8 +9,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Pinned so an upstream server release cannot silently change the behaviour
+  # the acceptance criteria are proven against.
+  MONGODB_SERVER_VERSION: '8.0.4'
+
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,13 +30,17 @@ jobs:
         with:
           enable-cache: true
 
+      # `uv sync` builds the pinned upstream Polars runtime from source, and
+      # that source tree pins its own toolchain through `rust-toolchain.toml`.
+      # Installing it explicitly keeps the build off an implicit rustup
+      # auto-download and fails here rather than mid-build.
+      - name: Install the toolchain the pinned Polars runtime requires
+        run: rustup toolchain install nightly-2026-09-01 --profile minimal
+
       - name: Lint Rust
         run: |
           cargo fmt --check
           cargo clippy --all-targets -- -D warnings
-
-      - name: Rust tests
-        run: cargo test
 
       - name: Build extension
         run: |
@@ -44,5 +53,61 @@ jobs:
           uv run ruff format --check .
           uv run mypy
 
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Rust tests
+        run: cargo test
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+          version-file: pyproject.toml
+
+      - name: Install the toolchain the pinned Polars runtime requires
+        run: rustup toolchain install nightly-2026-09-01 --profile minimal
+
+      # A service container is insufficient: the fixture spawns the binary
+      # itself so it controls the port, dbpath, profiling flags and
+      # `enableTestCommands`.
+      - name: Install the MongoDB server binary
+        run: |
+          set -euo pipefail
+          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc \
+            | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-8.0.gpg
+          echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/8.0 multiverse" \
+            | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+          sudo apt-get update
+          sudo apt-get install -y "mongodb-org-server=${MONGODB_SERVER_VERSION}"
+
+      # Explicit, so an install regression fails here rather than as a wall of
+      # skips inside the test session.
+      - name: Assert mongod is present
+        run: mongod --version
+
+      - name: Build extension
+        run: |
+          uv sync
+          uv run maturin develop --uv
+
+      # `-W error` is scoped to the Polars unregistered-extension warning so an
+      # AC-21 regression is a red build rather than a quiet warning.
       - name: Python tests
-        run: uv run pytest
+        run: >-
+          uv run pytest --require-mongo
+          -W "error:Extension type .* is not registered"

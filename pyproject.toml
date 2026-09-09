@@ -8,7 +8,11 @@ description = "Polars expression plugin for MongoDB-flavoured data"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
-dependencies = ["polars>=1.44"]
+dependencies = [
+    "polars @ git+https://github.com/pola-rs/polars.git@ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c#subdirectory=py-polars",
+    "polars-runtime-32 @ git+https://github.com/pola-rs/polars.git@ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c#subdirectory=py-polars/runtime/polars-runtime-32",
+    "pyarrow>=17",
+]
 dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -27,11 +31,17 @@ dev = [
     "pytest>=8.3",
     "ruff>=0.14",
     "mypy>=1.14",
+    # Independent BSON oracle for the test harness. Never a runtime dependency.
+    "pymongo>=4.10",
+    "pyarrow-stubs>=20.0.0.20260819",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q --strict-markers"
+markers = [
+    "mongo: requires the ephemeral mongod fixture (a live server)",
+]
 
 [tool.ruff]
 line-length = 100
