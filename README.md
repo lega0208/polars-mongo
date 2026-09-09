@@ -37,6 +37,22 @@ assert result.to_dicts() == [
 Use `.mongo.from_hex()` to make binary storage and `.mongo.to_hex()` to render
 it. These are expression namespace methods; they do not monkeypatch Polars.
 
+## Releases
+
+Pushes to `main` create a GitHub release tagged with the Cargo package version.
+When that version equals the latest published release, the workflow increments
+the patch number and synchronizes `Cargo.toml` and `Cargo.lock`; a `uv.lock`
+version field is updated when present. Higher explicit versions are kept (and
+stale `Cargo.lock` metadata is repaired). The editable dynamic project record
+in `uv.lock` intentionally has no version field and remains that way. The
+release workflow then invokes the wheel publish workflow directly (the
+`GITHUB_TOKEN` release event is otherwise suppressed).
+
+The repository must allow `github-actions[bot]` to push to `main` (or exempt
+that bot from the branch rule), and the workflow's `contents: write` permission
+must remain enabled. PyPI publishing uses the `pypi` trusted-publishing
+environment and its OIDC `id-token: write` permission; no PAT is required.
+
 ## IO API
 
 ```python
