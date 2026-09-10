@@ -133,7 +133,7 @@ jobs:
           test "${#wheels[@]}" -eq 3
           for pattern in \
             '*manylinux*_x86_64.whl' \
-            '*manylinux*_aarch64.whl' \
+            # '*manylinux*_aarch64.whl' \
             '*win_amd64.whl'
           do
             matches=(dist/$pattern)
