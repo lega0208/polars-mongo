@@ -18,9 +18,15 @@ permissions:
   contents: read
 
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ inputs.release_tag || github.ref_name }}
+
   build-wheels:
     name: Build ${{ matrix.name }} wheel
     runs-on: ${{ matrix.runner }}
+    needs: ci
     strategy:
       fail-fast: true
       matrix:
