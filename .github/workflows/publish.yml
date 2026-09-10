@@ -131,10 +131,9 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           wheels=(dist/*.whl)
-          test "${#wheels[@]}" -eq 3
+          test "${#wheels[@]}" -eq 2
           for pattern in \
             '*manylinux*_x86_64.whl' \
-            # '*manylinux*_aarch64.whl' \
             '*win_amd64.whl'
           do
             matches=(dist/$pattern)
