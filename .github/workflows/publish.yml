@@ -29,10 +29,10 @@ jobs:
             runner: ubuntu-latest
             target: x86_64
             manylinux: auto
-          - name: linux-aarch64
-            runner: ubuntu-latest
-            target: aarch64
-            manylinux: auto
+          # - name: linux-aarch64
+          #   runner: ubuntu-latest
+          #   target: aarch64
+          #   manylinux: auto
           - name: windows-x64
             runner: windows-latest
             target: x64
