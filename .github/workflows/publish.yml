@@ -89,6 +89,9 @@ jobs:
 
       - name: Build wheel
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
         with:
           command: build
           target: ${{ matrix.target }}
