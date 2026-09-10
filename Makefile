@@ -24,6 +24,12 @@ wheel: install ## Build a distributable wheel into target/wheels
 .PHONY: test
 test: dev ## Run Rust and Python tests
 	cargo test
+	$(UV) run --env-file .env pytest --require-mongo \
+	-W "error:Extension type .* is not registered"
+
+.PHONY: test-nomongo
+test-nomongo: dev ## Run Rust and Python tests without a running MongoDB server
+	cargo test
 	$(UV) run pytest
 
 .PHONY: lint

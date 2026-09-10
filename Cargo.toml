@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 # `extension-module` is intentionally NOT enabled here: it would break `cargo test`
 # and `cargo run`. maturin turns it on via `features` in pyproject.toml.
-pyo3 = { version = "0.29", features = ["abi3-py310"] }
+pyo3 = { version = "0.29", features = ["abi3-py312"] }
 pyo3-polars = { git = "https://github.com/pola-rs/polars.git", rev = "ba3fd05bd03570d1a7ace9bce39ce690de1a3d6c", features = ["derive"] }
 # Feature closure is stated in full; `dtype-u8` is required for Arrow UInt8 import
 # (F5) and is not left to transitive defaults. `lazy` is deliberately not enabled.

@@ -21,3 +21,5 @@ dist/
 
 # Coding agent
 .gjc
+
+.env
