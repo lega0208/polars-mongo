@@ -41,8 +41,8 @@ it. These are expression namespace methods; they do not monkeypatch Polars.
 
 Pushes to `main` run the standalone `Publish` workflow: CI must pass before
 version preparation, wheel builds, and distribution validation. Only validated
-wheels can proceed to GitHub release creation and then PyPI publication; the
-same wheel artifacts are reused without rebuilding.
+wheels can proceed to GitHub release creation, which attaches them as release
+assets; the same wheel artifacts are reused without rebuilding.
 When the Cargo package version equals the latest published release, the workflow increments
 the patch number and synchronizes `Cargo.toml` and `Cargo.lock`; a `uv.lock`
 version field is updated when present. Higher explicit versions are kept (and
@@ -52,10 +52,26 @@ are tagged with the prepared Cargo package version. Pull requests run CI only.
 
 The repository must allow `github-actions[bot]` to push to `main` (or exempt
 that bot from the branch rule), and the workflow's `contents: write` permission
-must remain enabled. PyPI publishing uses the `pypi` trusted-publishing
-environment in `publish.yml` and its OIDC `id-token: write` permission; no PAT
-is required. Retry a failed upload with GitHub Actions' **Re-run failed jobs**
-to reuse the validated artifacts while they remain available.
+must remain enabled. Retry a failed release with GitHub Actions' **Re-run
+failed jobs** to reuse the validated artifacts while they remain available.
+
+### Installing
+
+Wheels come from the GitHub release assets, not PyPI:
+
+```bash
+pip install https://github.com/<owner>/polars-mongo/releases/latest/download/polars_mongo-<version>-cp312-abi3-manylinux_2_34_x86_64.whl
+```
+
+PyPI publication is disabled and the `publish` job in `publish.yml` is commented
+out. This project requires the Polars revision that propagates the original
+exception out of a `register_io_source` generator (pola-rs/polars#29003), which
+landed after the `py-2.0.0-rc.1` tag, so `pyproject.toml` depends on Polars by
+git revision - and PyPI rejects direct-URL dependencies. Reverting to the
+released `polars==2.0.0rc1` would fail 25 tests and silently degrade every typed
+`MongoConversionError` to a stringified `ComputeError`; see the error-transport
+note in `python/polars_mongo/_read.py`. Both the PyPI job and the `>=2.0.0`
+dependency bound are reinstated once Polars 2.0.0 final is published.
 
 ## IO API
 

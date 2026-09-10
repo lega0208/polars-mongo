@@ -415,6 +415,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
+      - name: Download validated wheel set
+        uses: actions/download-artifact@v8
+        with:
+          name: validated-wheels
+          path: dist
+
       - name: Re-check main before release creation
         env:
           RELEASE_SHA: ${{ needs.prepare-version.outputs.release_sha }}
@@ -478,9 +484,10 @@ jobs:
             if [[ "$release_draft" == "true" ]]; then
               gh release edit "$RELEASE_TAG" --draft=false
             fi
+            gh release upload "$RELEASE_TAG" dist/*.whl --clobber
             echo "Release $RELEASE_TAG already exists; safely retrying it."
           elif grep -Eq 'HTTP[^0-9]*404|404 Not Found' release_error; then
-            gh release create "$RELEASE_TAG" --target "$commit_sha" --title "$RELEASE_TAG" --generate-notes
+            gh release create "$RELEASE_TAG" --target "$commit_sha" --title "$RELEASE_TAG" --generate-notes dist/*.whl
           else
             printf '%s\n' "$(<release_error)" >&2
             echo "GitHub API failed while checking release $RELEASE_TAG." >&2
@@ -488,24 +495,44 @@ jobs:
           fi
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
-  publish:
-    name: Publish wheels to PyPI
-    runs-on: ubuntu-latest
-    needs: release
-    if: ${{ needs.release.result == 'success' && needs.release.outputs.release_tag != '' }}
-    environment:
-      name: pypi
-      url: https://pypi.org/p/polars-mongo
-    permissions:
-      id-token: write
-    steps:
-      - name: Download validated wheel set
-        uses: actions/download-artifact@v8
-        with:
-          name: validated-wheels
-          path: dist
-
-      - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
+  # PyPI publication is disabled until Polars 2.0.0 final is on PyPI.
+  #
+  # This project's typed error transport (`tests/test_error_transport.py`) needs the
+  # upstream fix in pola-rs/polars#29003, which removed the `ComputeError` stringify
+  # of exceptions raised inside a `register_io_source` generator. That fix landed
+  # after the `py-2.0.0-rc.1` tag, so `pyproject.toml` requires Polars at a git
+  # revision - and PyPI rejects any distribution whose dependencies carry direct
+  # URLs. Reverting to `polars==2.0.0rc1` to satisfy PyPI would fail 25 tests and
+  # ship the exact silent degradation that test module exists to prevent.
+  #
+  # Until then the `release` job above publishes the same validated wheels as GitHub
+  # release assets, which is the supported install channel (see README "Releases").
+  #
+  # TO REINTRODUCE once Polars 2.0.0 is released on PyPI: set the `polars` and
+  # `polars-runtime-32` dependencies in `pyproject.toml` to `>=2.0.0`, re-run
+  # `uv lock`, confirm `make test` is green against the released wheel, then
+  # uncomment this job verbatim. It needs no other change: it consumes the
+  # `validated-wheels` artifact the `validate-wheels` job already uploads, and the
+  # `pypi` trusted-publishing environment is already configured.
+  #
+  # publish:
+  #   name: Publish wheels to PyPI
+  #   runs-on: ubuntu-latest
+  #   needs: release
+  #   if: ${{ needs.release.result == 'success' && needs.release.outputs.release_tag != '' }}
+  #   environment:
+  #     name: pypi
+  #     url: https://pypi.org/p/polars-mongo
+  #   permissions:
+  #     id-token: write
+  #   steps:
+  #     - name: Download validated wheel set
+  #       uses: actions/download-artifact@v8
+  #       with:
+  #         name: validated-wheels
+  #         path: dist
+  #
+  #     - name: Publish package to PyPI
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         skip-existing: true
