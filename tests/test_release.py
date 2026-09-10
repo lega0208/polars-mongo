@@ -39,6 +39,51 @@ def test_initial_release_uses_explicit_version() -> None:
     assert select_release_version("0.1.0", None) == "0.1.0"
 
 
+def test_initial_release_cli_synchronizes_stale_metadata(tmp_path) -> None:
+    (tmp_path / "Cargo.toml").write_text(
+        '[package]\nname = "polars-mongo"\nversion = "0.1.0"\n\n[dependencies]\nserde = "1"\n'
+    )
+    (tmp_path / "Cargo.lock").write_text(
+        'version = 4\n\n[[package]]\nname = "polars-mongo"\nversion = "0.0.9"\n'
+        'dependencies = ["serde"]\n\n[[package]]\nname = "serde"\nversion = "1.0.0"\n'
+    )
+    (tmp_path / "uv.lock").write_text(
+        'version = 1\n\n[[package]]\nname = "polars-mongo"\nsource = { editable = "." }\n'
+        'version = "0.0.9"\ndependencies = [{ name = "serde" }]\n\n'
+        '[[package]]\nname = "serde"\nversion = "1.0.0"\n'
+    )
+
+    assert main(["--root", str(tmp_path)]) == 0
+    assert 'version = "0.1.0"' in (tmp_path / "Cargo.lock").read_text()
+    assert 'version = "0.1.0"' in (tmp_path / "uv.lock").read_text()
+    assert 'dependencies = ["serde"]' in (tmp_path / "Cargo.lock").read_text()
+    assert '{ name = "serde" }' in (tmp_path / "uv.lock").read_text()
+    assert 'name = "serde"\nversion = "1.0.0"' in (tmp_path / "Cargo.lock").read_text()
+    assert 'name = "serde"\nversion = "1.0.0"' in (tmp_path / "uv.lock").read_text()
+
+
+def test_initial_release_cli_preserves_omitted_uv_version(tmp_path) -> None:
+    (tmp_path / "Cargo.toml").write_text(
+        '[package]\nname = "polars-mongo"\nversion = "0.1.0"\n\n[dependencies]\nserde = "1"\n'
+    )
+    (tmp_path / "Cargo.lock").write_text(
+        'version = 4\n\n[[package]]\nname = "polars-mongo"\nversion = "0.0.9"\n'
+        'dependencies = ["serde"]\n\n[[package]]\nname = "serde"\nversion = "1.0.0"\n'
+    )
+    (tmp_path / "uv.lock").write_text(
+        'version = 1\n\n[[package]]\nname = "polars-mongo"\nsource = { editable = "." }\n'
+        'dependencies = [{ name = "serde" }]\n\n[[package]]\nname = "serde"\n'
+        'version = "1.0.0"\n'
+    )
+
+    assert main(["--root", str(tmp_path)]) == 0
+    assert 'version = "0.1.0"' in (tmp_path / "Cargo.lock").read_text()
+    uv_lock = (tmp_path / "uv.lock").read_text()
+    assert 'name = "polars-mongo"\nsource = { editable = "." }\nversion =' not in uv_lock
+    assert '{ name = "serde" }' in uv_lock
+    assert 'name = "serde"\nversion = "1.0.0"' in uv_lock
+
+
 def test_bump_synchronizes_metadata_without_dependency_changes(tmp_path) -> None:
     cargo_toml = tmp_path / "Cargo.toml"
     cargo_lock = tmp_path / "Cargo.lock"

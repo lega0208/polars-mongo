@@ -39,19 +39,23 @@ it. These are expression namespace methods; they do not monkeypatch Polars.
 
 ## Releases
 
-Pushes to `main` create a GitHub release tagged with the Cargo package version.
-When that version equals the latest published release, the workflow increments
+Pushes to `main` run the standalone `Publish` workflow: CI must pass before
+version preparation, wheel builds, and distribution validation. Only validated
+wheels can proceed to GitHub release creation and then PyPI publication; the
+same wheel artifacts are reused without rebuilding.
+When the Cargo package version equals the latest published release, the workflow increments
 the patch number and synchronizes `Cargo.toml` and `Cargo.lock`; a `uv.lock`
 version field is updated when present. Higher explicit versions are kept (and
 stale `Cargo.lock` metadata is repaired). The editable dynamic project record
-in `uv.lock` intentionally has no version field and remains that way. The
-release workflow then invokes the wheel publish workflow directly (the
-`GITHUB_TOKEN` release event is otherwise suppressed).
+in `uv.lock` intentionally has no version field and remains that way. Releases
+are tagged with the prepared Cargo package version. Pull requests run CI only.
 
 The repository must allow `github-actions[bot]` to push to `main` (or exempt
 that bot from the branch rule), and the workflow's `contents: write` permission
 must remain enabled. PyPI publishing uses the `pypi` trusted-publishing
-environment and its OIDC `id-token: write` permission; no PAT is required.
+environment in `publish.yml` and its OIDC `id-token: write` permission; no PAT
+is required. Retry a failed upload with GitHub Actions' **Re-run failed jobs**
+to reuse the validated artifacts while they remain available.
 
 ## IO API
 

@@ -217,10 +217,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         current = read_cargo_version(args.root / "Cargo.toml")
         selected = select_release_version(current, args.latest)
-        # A first release has no prior version to synchronize.  For any
-        # comparison against a published release, synchronize the lock records
-        # even when an explicit higher Cargo version is retained.
-        changed = bool(args.latest) and update_version_files(selected, root=args.root)
+        # Synchronize all version metadata, including on a first release with no
+        # prior published version.
+        changed = update_version_files(selected, root=args.root)
     except (OSError, ReleaseVersionError) as exc:
         print(f"release version error: {exc}", file=sys.stderr)
         return 1

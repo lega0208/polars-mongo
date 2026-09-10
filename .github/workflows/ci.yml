@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_call:
     inputs:
@@ -27,51 +25,35 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
-
-      - uses: astral-sh/setup-uv@v10.0.1
         with:
-          enable-cache: true
-
-      # `uv sync` builds the pinned upstream Polars runtime from source, and
-      # that source tree pins its own toolchain through `rust-toolchain.toml`.
-      # Installing it explicitly keeps the build off an implicit rustup
-      # auto-download and fails here rather than mid-build.
-      - name: Install the toolchain the pinned Polars runtime requires
-        run: rustup toolchain install nightly-2026-09-01 --profile minimal
+          shared-key: ci-lint
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Lint Rust
         run: |
           cargo fmt --check
           cargo clippy --all-targets -- -D warnings
 
-      - name: Build extension
-        run: |
-          uv sync
-          uv run maturin develop --uv
-
-      - name: Lint Python
-        run: |
-          uv run ruff check .
-          uv run ruff format --check .
-          uv run ty check
-
   rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: dtolnay/rust-toolchain@nightly
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-rust
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Rust tests
         run: cargo test
@@ -81,16 +63,24 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: dtolnay/rust-toolchain@nightly
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-python
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
           version-file: pyproject.toml
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          cache-dependency-glob: |
+            uv.lock
+            pyproject.toml
+            rust-toolchain.toml
 
       - name: Install the toolchain the pinned Polars runtime requires
         run: rustup toolchain install nightly-2026-09-01 --profile minimal
@@ -113,14 +103,18 @@ jobs:
       - name: Assert mongod is present
         run: mongod --version
 
-      - name: Build extension
+      - name: Install dependencies and build extension
+        run: uv sync --locked
+
+      - name: Lint Python
         run: |
-          uv sync
-          uv run maturin develop --uv
+          uv run --no-sync ruff check .
+          uv run --no-sync ruff format --check .
+          uv run --no-sync ty check
 
       # `-W error` is scoped to the Polars unregistered-extension warning so an
       # AC-21 regression is a red build rather than a quiet warning.
       - name: Python tests
         run: >-
-          uv run pytest --require-mongo
+          uv run --no-sync pytest --require-mongo
           -W "error:Extension type .* is not registered"
