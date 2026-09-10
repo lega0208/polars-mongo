@@ -19,7 +19,7 @@ jobs:
       release_tag: ${{ steps.create-release.outputs.release_tag }}
     steps:
       - name: Check out main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -43,7 +43,7 @@ jobs:
 
       - name: Set up Python
         if: steps.initial-freshness.outputs.stale == 'false'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
